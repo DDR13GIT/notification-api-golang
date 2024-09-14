@@ -6,6 +6,7 @@ import (
 	"notification-api-golang/database"
 	"notification-api-golang/models"
 	"strconv"
+
 	"github.com/gorilla/mux"
 )
 
@@ -13,8 +14,7 @@ func CreateNotification(w http.ResponseWriter, r *http.Request) {
 	var notification models.Notification
 	json.NewDecoder(r.Body).Decode(&notification)
 
-	result, err := database.DB.Exec("INSERT INTO notifications (message, user_id, is_read) VALUES (?, ?, ?)",
-		notification.Message, notification.UserID, notification.IsRead)
+	result, err := database.DB.Exec("INSERT into notifications (message, user_id, read) VALUES (?, ?, ?)", notification.Message, notification.UserID, notification.IsRead)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -41,6 +41,35 @@ func GetNotification(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(notification)
+}
+
+func GetAllNotifications(w http.ResponseWriter, r *http.Request) {
+	rows, err := database.DB.Query("SELECT id, message, user_id, is_read FROM notifications")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var notifications []models.Notification
+
+	for rows.Next() {
+		var notification models.Notification
+		err := rows.Scan(&notification.ID, &notification.Message, &notification.UserID, &notification.IsRead)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		notifications = append(notifications, notification)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notifications)
 }
 
 func UpdateNotification(w http.ResponseWriter, r *http.Request) {

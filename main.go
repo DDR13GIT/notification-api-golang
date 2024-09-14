@@ -16,6 +16,7 @@ func main() {
 
 	r.HandleFunc("/notifications", handlers.CreateNotification).Methods("POST")
 	r.HandleFunc("/notifications/{id}", handlers.GetNotification).Methods("GET")
+	r.HandleFunc("/notifications", handlers.GetAllNotifications).Methods("GET")
 	r.HandleFunc("/notifications/{id}", handlers.UpdateNotification).Methods("PUT")
 	r.HandleFunc("/notifications/{id}", handlers.DeleteNotification).Methods("DELETE")
 
